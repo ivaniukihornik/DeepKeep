@@ -1,0 +1,36 @@
+name: Autotesting
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.3'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+
+      - name: Launch Mock API
+        run: |
+          mkdir test_results/
+          touch test_results/api.log
+          uvicorn mock_api.app:app &
+
+      - name: Run tests
+        run: pytest --html=test_results/report.html
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test results
+          path: test_results/
+        if: ${{ always() }}
